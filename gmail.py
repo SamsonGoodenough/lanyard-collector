@@ -1,6 +1,3 @@
-import smtplib
-import ssl
-
 #   ██████  ▄▄▄       ███▄ ▄███▓  ██████  ▒█████   ███▄    █  ░  ▓█████▄ ▓█████ ██▒   █▓
 # ▒██    ▒ ▒████▄    ▓██▒▀█▀ ██▒▒██    ▒ ▒██▒  ██▒ ██ ▀█   █ ░░ ▒▒██▀ ██▌▓█   ▀▓██░   █▒
 # ░ ▓██▄   ▒██  ▀█▄  ▓██    ▓██░░ ▓██▄   ▒██░  ██▒▓██  ▀█ ██▒▒▀▀░░██   █▌▒███   ▓██  █▒░
@@ -11,34 +8,47 @@ import ssl
 # ░  ░  ░    ░   ▒   ░      ░   ░  ░  ░  ░ ░ ░ ▒     ░   ░ ░  ░  ░░ ░ ░ ░  ░    ░       ░░  
 #       ░        ░  ░       ░         ░      ░ ░           ░  ░  ░  ░   ░       ░  ░     ░  
 
+import smtplib
+import ssl
+import time
+from pathlib import Path
+from tqdm import trange
+from email_functions import make_email, send_email
+
+FILE_NAME = 'data/Test-Data.csv'
+
 # prompt user for their gmail and 'app password'
 port = 465
-gmail_user = str(input('Email: '))
-password = str(input('Password: '))
+gmail_user = str(input('Enter your email: '))
+password = str(input('Enter your password: '))
+delay = int(input('Enter delay between emails (s): '))
 context = ssl.create_default_context()
-
 sent_from = gmail_user
-to = ['goodenough.samson@gmail.com']
-subject = "OMG Super Important Message"
-body = "Hey, what's up?"
 
-email_text = """\
-From: %s
-To: %s
-Subject: %s
+# create list of schools and their emails
+schools = []
+emails = []
+has_titles = True
+with open(FILE_NAME, 'r') as f:
+  for line in f.readlines():
+    if has_titles:
+      has_titles = False
+    else:
+      school,email = line.strip().split(',')
+      schools.append(school)
+      emails.append(email)
 
-%s
-""" % (sent_from, ", ".join(to), subject, body)
-
+# start server
 with smtplib.SMTP_SSL("smtp.gmail.com", port, context=context) as server:
-  server.login("goodenough.samson@gmail.com", password)
+  server.login(gmail_user, password)
 
-  try:
-    server.sendmail(sent_from, to, email_text)
-    print('Email sent to {:}!'.format(to[0]))
-
-  except:
-    print('Something went wrong.')
+  # loop through schools -> generate and send emails
+  for i in trange(len(schools)):
+    time.sleep(delay)
+    school = schools[i]
+    to = emails[i]
+    subject, body = make_email(school)
+    send_email(subject, body, school, to, server, sent_from)
   
 server.close()
 print('Terminated connection')
