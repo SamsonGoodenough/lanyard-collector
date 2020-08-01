@@ -15,7 +15,7 @@ from pathlib import Path
 from tqdm import trange
 from email_functions import make_email, send_email
 
-FILE_NAME = 'data/Test-Data.csv'
+FILE_NAME = 'data/College-Emails-Sheet1.csv'
 
 # prompt user for their gmail and 'app password'
 port = 465
